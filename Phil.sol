@@ -1,0 +1,163 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.8;
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+error ZK_Phil__notTreasurer();
+error ZK_Phil__notVerifier();
+error ZK_Phil__notMerchant();
+error ZK_Phil__notAuthorised();
+error ZK_Phil__transferError1();
+error ZK_Phil__transferError2();
+error ZK_Phil__transferError3();
+
+contract ZK_Phil is ERC20 {
+    constructor(uint256 initialSupply) ERC20("ZK_Phil", "ZKPL") {
+        _mint(msg.sender, initialSupply);
+        treasurer = msg.sender;
+    }
+
+    address public treasurer;
+
+    struct person {
+        string pName;
+        bool isPerson;
+    }
+    struct verifier {
+        string vName;
+        bool isVerifier;
+    }
+    struct merchant {
+        string mName;
+        bool isMerchant;
+    }
+
+    // Mapping from user addresses to their balances
+    mapping(address => uint256) public bMap;
+
+    // Mapping from user addresses to their roles
+    mapping(address => verifier) public vMapping;
+    mapping(address => person) public pMapping;
+    mapping(address => merchant) public mMapping;
+
+    // Create arrays for adding new entities
+    verifier[] internal vArray;
+    person[] internal pArray;
+    merchant[] internal mArray;
+
+    // TODO implement ensure person(s), vendors and verifiers can not be in eachothers list
+    // example could be like...  if ((pMapping[address].isPerson != false || mMapping[address].isMerchant != false) == true) revert blah
+
+    // Function to allow Treasurer to add a verifier
+    function addVerifier(
+        string memory _vName,
+        bool _isVerifier,
+        address _Address
+    ) external {
+        //enforce only Treasurer can add verifiers
+        if (msg.sender != treasurer) revert ZK_Phil__notTreasurer();
+        // add verifier
+        verifier memory newVerifier = verifier(_vName, _isVerifier);
+        vMapping[_Address] = newVerifier;
+        vArray.push(newVerifier);
+    }
+
+    // Function to add a user to the personList
+    function addPerson(
+        address _Address,
+        string memory _pName,
+        bool _isPerson
+    ) external {
+        //enforce only verifier can add person
+        if (vMapping[msg.sender].isVerifier != true) revert ZK_Phil__notVerifier();
+        // add person  to personList
+        person memory newPerson = person(_pName, _isPerson);
+        pMapping[_Address] = newPerson;
+        pArray.push(newPerson);
+    }
+
+    // Function to add a merchant to the merchantList
+    function addMerchant(
+        address _mAddress,
+        string memory _mName,
+        bool _isMerchant
+    ) public {
+        //enforce only verifier can add merchant
+        if (vMapping[msg.sender].isVerifier != true) revert ZK_Phil__notVerifier();
+        // add merchant
+        merchant memory newMerchant = merchant(_mName, _isMerchant);
+        mMapping[_mAddress] = newMerchant;
+        mArray.push(newMerchant);
+    }
+
+    // Function to transfer tokens to a merchant
+    function makeDonation(
+        address to,
+        uint256 amount
+    ) public returns (bool success) {
+        // Ensure the spender is a Treasurer
+        if (msg.sender != treasurer) revert ZK_Phil__notTreasurer();
+        // Ensure to address is an authorised person
+        if (pMapping[to].isPerson != true) revert ZK_Phil__notAuthorised();
+        // Transfer the tokens
+        _transfer(msg.sender, to, amount);
+        return true;
+    }
+
+    // Function to transfer tokens to a merchant
+    function spendDonation(
+        address to,
+        uint256 amount
+    ) public returns (bool success) {
+        // Ensure the spender is an authorised Person
+        if (pMapping[msg.sender].isPerson != true) revert ZK_Phil__notAuthorised();
+        // Ensure to address is an authorised Merchant
+        if (mMapping[to].isMerchant != true) revert ZK_Phil__notMerchant();
+        // Transfer the tokens
+        _transfer(msg.sender, to, amount);
+        return true;
+    }
+
+    // Function to transfer tokens to a merchant
+    function redeemTokens(
+        address to,
+        uint256 amount
+    ) public returns (bool success) {
+        // Ensure the redeemer is a Merchant
+        if (mMapping[msg.sender].isMerchant != true) revert ZK_Phil__notMerchant();
+        // Ensure to address is the treasurer
+        if (msg.sender != treasurer) revert ZK_Phil__notTreasurer();
+        // Transfer the tokens
+        _transfer(msg.sender, to, amount);
+        return true;
+    }
+
+    function increaseAllowance(
+        address,
+        uint256
+    ) public virtual override returns (bool) {
+        revert ZK_Phil__notAuthorised();
+    }
+
+    function approve(address, uint256) public virtual override returns (bool) {
+        revert ZK_Phil__notAuthorised();
+    }
+
+    function decreaseAllowance(
+        address,
+        uint256
+    ) public virtual override returns (bool) {
+        revert ZK_Phil__notAuthorised();
+    }
+
+    function transfer(address, uint256) public virtual override returns (bool) {
+        revert ZK_Phil__notAuthorised();
+    }
+
+    function transferFrom(
+        address,
+        address,
+        uint256
+    ) public virtual override returns (bool) {
+        revert ZK_Phil__notAuthorised();
+    }
+}
