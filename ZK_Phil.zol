@@ -37,9 +37,9 @@ contract ZK_Phil is ERC20 {
     // ############################
     // ###### PRIVACY NEEDED ######
     // ############################
-    // Mapping from user addresses to their roles
+    // Mapping from actor addresses to their roles
     mapping(address => verifier) public vMapping;
-    mapping(address => person) public pMapping;
+    secret mapping(address => person) public pMapping;
     mapping(address => merchant) public mMapping;
 
     // Create arrays for adding new entities
@@ -97,15 +97,15 @@ contract ZK_Phil is ERC20 {
     // ############################
     // Function to transfer tokens to a Person
     function makeDonation(
-        address to,
-        uint256 amount
+        secret address to,
+        secret uint256 amount
     ) public returns (bool success) {
         // Ensure the spender is a Treasurer
         if (msg.sender != treasurer) revert ZK_Phil__notTreasurer();
         // Ensure to address is an authorised person
         if (pMapping[to].isPerson != true) revert ZK_Phil__notAuthorised();
         // Transfer the tokens
-        _transfer(msg.sender, to, amount);
+        unknown _transfer(msg.sender, to, amount);
         return true;
     }
 
@@ -114,15 +114,15 @@ contract ZK_Phil is ERC20 {
     // ############################
     // Function to transfer tokens to a merchant
     function spendDonation(
-        address to,
-        uint256 amount
+        secret address to,
+        secret uint256 amount
     ) public returns (bool success) {
         // Ensure the spender is an authorised Person
         if (pMapping[msg.sender].isPerson != true) revert ZK_Phil__notAuthorised();
         // Ensure to address is an authorised Merchant
         if (mMapping[to].isMerchant != true) revert ZK_Phil__notMerchant();
         // Transfer the tokens
-        _transfer(msg.sender, to, amount);
+        unknown _transfer(msg.sender, to, amount);
         return true;
     }
 
